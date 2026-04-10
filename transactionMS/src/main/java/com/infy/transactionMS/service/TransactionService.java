@@ -12,15 +12,24 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.infy.transactionMS.event.TransactionEvent;
+import org.springframework.kafka.core.KafkaTemplate;
+import java.time.format.DateTimeFormatter;
+
 @Service
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final GoogleAiServiceClient aiServiceClient;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    public TransactionService(TransactionRepository transactionRepository, GoogleAiServiceClient aiServiceClient) {
+    public TransactionService(TransactionRepository transactionRepository, GoogleAiServiceClient aiServiceClient, KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
         this.transactionRepository = transactionRepository;
         this.aiServiceClient = aiServiceClient;
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Transaction processPayment(PaymentRequest request) {
@@ -39,7 +48,18 @@ public class TransactionService {
                 PaymentStatus.SUCCESS // assuming simple successful payment for now
         );
 
-        return transactionRepository.save(transaction);
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        
+        // Publish Event to Kafka
+        try {
+            String monthYear = savedTransaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            TransactionEvent event = new TransactionEvent(savedTransaction.getId(), savedTransaction.getAmount(), savedTransaction.getCategory(), monthYear);
+            kafkaTemplate.send("transaction-events", objectMapper.writeValueAsString(event));
+        } catch (Exception e) {
+            System.err.println("Failed to send Kafka event: " + e.getMessage());
+        }
+
+        return savedTransaction;
     }
 
     public Transaction getTransactionDetails(Long id) {
