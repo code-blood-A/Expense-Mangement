@@ -5,6 +5,7 @@ public class BudgetAlertEvent {
     private String monthYear;
     private Double limitAmount;
     private Double currentSpend;
+    private String receivedAt;
 
     public BudgetAlertEvent() {}
 
@@ -16,4 +17,6 @@ public class BudgetAlertEvent {
     public void setLimitAmount(Double limitAmount) { this.limitAmount = limitAmount; }
     public Double getCurrentSpend() { return currentSpend; }
     public void setCurrentSpend(Double currentSpend) { this.currentSpend = currentSpend; }
+    public String getReceivedAt() { return receivedAt; }
+    public void setReceivedAt(String receivedAt) { this.receivedAt = receivedAt; }
 }
