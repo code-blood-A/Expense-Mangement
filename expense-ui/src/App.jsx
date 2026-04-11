@@ -8,12 +8,14 @@ import Dashboard from './pages/Dashboard';
 import Ledger from './pages/Ledger';
 import Budget from './pages/Budget';
 import Notifications from './pages/Notifications';
+import Intelligence from './pages/Intelligence';
 
 const TOPBAR_LABELS = {
-  '/':              'Search Vault…',
-  '/ledger':        'Search ledger…',
-  '/budget':        'Search accounts or limits…',
-  '/notifications': 'Search activities…',
+  '/':               'Search Vault…',
+  '/ledger':         'Search ledger…',
+  '/budget':         'Search accounts or limits…',
+  '/notifications':  'Search activities…',
+  '/intelligence':   'Search insights…',
 };
 
 function ProtectedLayout({ children, path }) {
@@ -36,10 +38,11 @@ function ProtectedLayout({ children, path }) {
 
 function MobileNav() {
   const nav = [
-    { path: '/',              icon: 'dashboard',             label: 'Home'   },
-    { path: '/ledger',       icon: 'receipt_long',          label: 'Txns'   },
-    { path: '/budget',       icon: 'account_balance_wallet', label: 'Budget' },
-    { path: '/notifications', icon: 'notifications',         label: 'Alerts' },
+    { path: '/',               icon: 'dashboard',              label: 'Home'        },
+    { path: '/ledger',         icon: 'receipt_long',           label: 'Txns'        },
+    { path: '/budget',         icon: 'account_balance_wallet', label: 'Budget'      },
+    { path: '/notifications',  icon: 'notifications',          label: 'Alerts'      },
+    { path: '/intelligence',   icon: 'insights',               label: 'Intel'       },
   ];
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface/80 dark:bg-[#0f1115]/80 backdrop-blur-xl border-t border-outline-variant/20 dark:border-[#2a2d38] flex items-center justify-around z-50">
@@ -62,6 +65,7 @@ function AppRoutes() {
       <Route path="/ledger"          element={<ProtectedLayout path="/ledger"><Ledger /></ProtectedLayout>} />
       <Route path="/budget"          element={<ProtectedLayout path="/budget"><Budget /></ProtectedLayout>} />
       <Route path="/notifications"   element={<ProtectedLayout path="/notifications"><Notifications /></ProtectedLayout>} />
+      <Route path="/intelligence"    element={<ProtectedLayout path="/intelligence"><Intelligence /></ProtectedLayout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -6,6 +6,7 @@ const NAV = [
   { path: '/ledger',       label: 'Transactions',  icon: 'receipt_long' },
   { path: '/budget',       label: 'Budgets',       icon: 'account_balance_wallet' },
   { path: '/notifications', label: 'Notifications', icon: 'notifications' },
+  { path: '/intelligence',  label: 'Intelligence',  icon: 'insights' },
 ];
 
 export default function Sidebar() {

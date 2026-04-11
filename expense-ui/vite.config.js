@@ -22,6 +22,10 @@ export default defineConfig({
         target: 'http://localhost:8084',
         changeOrigin: true,
       },
+      '/api/analysis': {
+        target: 'http://localhost:8085',
+        changeOrigin: true,
+      },
     },
   },
 })
