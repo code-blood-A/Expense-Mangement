@@ -19,9 +19,9 @@ public class GoogleAiServiceClient {
         this.restTemplate = restTemplate;
     }
 
-    public String categorizeTransaction(String description, Double amount) {
+    public String categorizeTransaction(String description, Double amount, String merchantName) {
         try {
-            TransactionRequest request = new TransactionRequest(description, amount);
+            TransactionRequest request = new TransactionRequest(description, amount, merchantName);
             CategoryResponse response = restTemplate.postForObject(googleAiUrl, request, CategoryResponse.class);
             if (response != null && response.getCategory() != null) {
                 return response.getCategory();
@@ -30,6 +30,7 @@ public class GoogleAiServiceClient {
             // Log error, fallback to un-categorized
             System.err.println("Error calling googleai service: " + e.getMessage());
         }
-        return "Uncategorized";
+        return "MISCELLANEOUS";
     }
 }
+

@@ -1,4 +1,4 @@
 package com.infy.googleai.dto;
 
-public record TransactionRequest(String description, Double amount) {
+public record TransactionRequest(String description, Double amount, String merchantName) {
 }

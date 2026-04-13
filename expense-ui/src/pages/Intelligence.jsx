@@ -10,7 +10,10 @@ const CAT_ICONS = {
   Healthcare: 'local_hospital',
   Entertainment: 'movie',
   Education: 'school',
-  Other: 'category',
+  'Money Transfer': 'payments',
+  'Bill Payments': 'receipt',
+  'Metro Recharge': 'subway',
+  MISCELLANEOUS: 'category',
 };
 
 function catIcon(cat = '') {
@@ -65,27 +68,29 @@ function buildMonthOptions() {
 
 /* ══════════════════════════════════════════════
    MAIN PAGE COMPONENT
-══════════════════════════════════════════════ */
+   ══════════════════════════════════════════════ */
 export default function Intelligence() {
   const [month, setMonth] = useState(thisMonth);
   const monthOptions = buildMonthOptions();
 
   /* API state */
-  const [monthly, setMonthly]       = useState(null);
-  const [topCat, setTopCat]         = useState(null);
-  const [trend, setTrend]           = useState([]);
-  const [compare, setCompare]       = useState(null);
-  const [insight, setInsight]       = useState(null);
+  const [monthly, setMonthly] = useState(null);
+  const [topCat, setTopCat] = useState(null);
+  const [trend, setTrend] = useState([]);
+  const [compare, setCompare] = useState(null);
+  const [insight, setInsight] = useState(null);
+  const [breakdown, setBreakdown] = useState([]);
 
-  const [loading, setLoading]       = useState(false);
+  const [loading, setLoading] = useState(false);
   const [insightLoading, setInsightLoading] = useState(false);
-  const [error, setError]           = useState('');
+  const [breakdownLoading, setBreakdownLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  /* ── Fetch all metrics (except AI insight — triggered separately) ── */
+  /* ── Fetch all metrics (Stale-While-Revalidate pattern) ── */
   const fetchMetrics = useCallback(async (m) => {
     setLoading(true);
     setError('');
-    setMonthly(null); setTopCat(null); setTrend([]); setCompare(null); setInsight(null);
+    // Note: We don't wipe existing state here to prevent UI flickering/disappearance
     try {
       const [mRes, tRes, trRes, cRes] = await Promise.all([
         api.get(`/api/analysis/monthly-spend?month=${m}`),
@@ -98,42 +103,58 @@ export default function Intelligence() {
       setTrend(trRes.data ?? []);
       setCompare(cRes.data);
     } catch (e) {
-      setError(e.response?.data?.message || 'Failed to load analysis data. Is AnalysisMS running on port 8085?');
+      setError(e.response?.data?.message || 'Failed to load analysis metrics.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  /* ── Fetch AI insight separately (can be slow) ── */
+  /* ── Fetch Category Breakdown (Dedicated API) ── */
+  const fetchBreakdown = useCallback(async (m) => {
+    setBreakdownLoading(true);
+    try {
+      const { data } = await api.get(`/api/analysis/breakdown?month=${m}`);
+      setBreakdown(data ?? []);
+    } catch (e) {
+      console.error('Failed to fetch breakdown', e);
+    } finally {
+      setBreakdownLoading(false);
+    }
+  }, []);
+
+  /* ── Fetch AI insight separately ── */
   const fetchInsight = useCallback(async (m) => {
     setInsightLoading(true);
-    setInsight(null);
     try {
       const { data } = await api.get(`/api/analysis/insight?month=${m}`);
       setInsight(data);
     } catch (e) {
-      setInsight({ insight: 'Vault AI is currently processing your transactions. Please check back shortly.', categoryBreakdown: [] });
+      setInsight({ insight: 'Vault AI is currently processing your transactions. Please check back shortly.' });
     } finally {
       setInsightLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // Reset states ONLY when month actually changes to prevent stale data between months
+    setMonthly(null); setTopCat(null); setTrend([]); setCompare(null); setInsight(null); setBreakdown([]);
+    
     fetchMetrics(month);
+    fetchBreakdown(month);
     fetchInsight(month);
-  }, [month, fetchMetrics, fetchInsight]);
+  }, [month, fetchMetrics, fetchBreakdown, fetchInsight]);
 
   /* ── Derived helpers ──*/
   const changeDir = compare?.changeDirection ?? 'UP';
   const changePct = compare?.changePercent ?? '0.0 %';
-  const isUp      = changeDir === 'UP';
+  const isUp = changeDir === 'UP';
 
   /* Max trend value for bar scaling */
   const maxTrend = trend.reduce((mx, t) => Math.max(mx, t.totalSpend ?? 0), 1);
 
-  /* Category breakdown from insight (most complete) or empty */
-  const breakdown = insight?.categoryBreakdown ?? [];
+  /* Total aggregate from breakdown */
   const totalBreak = breakdown.reduce((s, b) => s + (b.amount ?? 0), 0) || 1;
+
 
   return (
     <div className="p-8 lg:p-10 space-y-10 fade-in">
@@ -238,11 +259,10 @@ export default function Intelligence() {
                         ₹{(t.totalSpend ?? 0).toFixed(0)} · {t.month}
                       </div>
                       <div
-                        className={`w-full rounded-t-sm transition-all duration-500 ${
-                          isCurrentMonth
+                        className={`w-full rounded-t-sm transition-all duration-500 ${isCurrentMonth
                             ? 'bg-primary shadow-[0_0_12px_rgba(46,91,255,0.35)]'
                             : 'bg-surface-container dark:bg-[#2a2d38] hover:bg-primary/30'
-                        }`}
+                          }`}
                         style={{ height: `${Math.max(pct, 8)}%` }}
                       />
                     </div>
@@ -334,7 +354,7 @@ export default function Intelligence() {
             </h3>
             <button
               id="refresh-categories"
-              onClick={() => fetchInsight(month)}
+              onClick={() => fetchBreakdown(month)}
               className="text-primary text-xs font-bold uppercase tracking-widest hover:underline"
             >
               Refresh
@@ -351,8 +371,8 @@ export default function Intelligence() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10 dark:divide-[#2a2d38]">
-                {insightLoading && breakdown.length === 0 ? (
-                  [1,2,3,4].map(i => (
+                {breakdownLoading && breakdown.length === 0 ? (
+                  [1, 2, 3, 4].map(i => (
                     <tr key={i}>
                       <td className="px-6 py-5"><Skeleton className="h-9 w-full" /></td>
                       <td className="px-6 py-5"><Skeleton className="h-5 w-20 ml-auto" /></td>
@@ -402,6 +422,7 @@ export default function Intelligence() {
             </table>
           </div>
         </div>
+
 
         {/* ── Right column: Comparison + Export ── */}
         <div className="space-y-4">
@@ -513,7 +534,7 @@ export default function Intelligence() {
               id="copy-insight"
               onClick={() => {
                 const text = insight?.insight ?? '';
-                navigator.clipboard.writeText(text).catch(() => {});
+                navigator.clipboard.writeText(text).catch(() => { });
               }}
               disabled={!insight?.insight}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-on-surface-variant dark:text-[#a0a3b1] bg-surface-container-low dark:bg-[#25282f] hover:bg-surface-container dark:hover:bg-[#2e3240] rounded-lg border border-outline-variant/10 dark:border-[#2a2d38] transition-all disabled:opacity-40"
@@ -594,7 +615,7 @@ export default function Intelligence() {
                     Analysis Period: {insight.month}
                   </span>
                   <span className="text-[10px] font-bold text-primary bg-primary/10 dark:bg-primary/20 px-2 py-1 rounded">
-                    {(insight.categoryBreakdown?.length ?? 0)} categories tracked
+                    {breakdown.length} categories tracked
                   </span>
                 </div>
               )}
@@ -607,14 +628,14 @@ export default function Intelligence() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-5">
                 <p className="text-[10px] font-black text-outline uppercase tracking-widest">
-                  Breakdown · Insight Response
+                  Breakdown
                 </p>
                 <span className="material-symbols-outlined text-outline text-base">pie_chart</span>
               </div>
 
-              {insightLoading && breakdown.length === 0 ? (
+              {breakdownLoading && breakdown.length === 0 ? (
                 <div className="space-y-4">
-                  {[1,2,3,4].map(i => (
+                  {[1, 2, 3, 4].map(i => (
                     <div key={i} className="space-y-1.5">
                       <div className="flex justify-between">
                         <Skeleton className="h-3 w-20" />
@@ -625,6 +646,7 @@ export default function Intelligence() {
                   ))}
                 </div>
               ) : breakdown.length === 0 ? (
+
                 <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
                   <span className="material-symbols-outlined text-4xl text-outline/30">bar_chart</span>
                   <p className="text-sm text-on-surface-variant dark:text-[#a0a3b1]">
@@ -718,7 +740,7 @@ export default function Intelligence() {
               <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-1">System Status</p>
               <p className="text-lg font-bold text-on-surface dark:text-[#e1e2e5]">Intelligence Engines Live</p>
               <p className="text-xs font-medium text-on-surface-variant dark:text-[#a0a3b1]">
-                Powered by AnalysisMS · port 8085 · shared expense_db
+                Powered by AnalysisMS · port 8086 · shared expense_db
               </p>
             </div>
           </div>

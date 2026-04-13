@@ -20,7 +20,7 @@ public class TransactionController {
 
     @PostMapping("/categorize")
     public CategoryResponse categorizeTransaction(@RequestBody TransactionRequest request) {
-        String category = service.categorizeTransaction(request.description());
+        String category = service.categorizeTransaction(request.description(), request.merchantName());
         return new CategoryResponse(category);
     }
 }

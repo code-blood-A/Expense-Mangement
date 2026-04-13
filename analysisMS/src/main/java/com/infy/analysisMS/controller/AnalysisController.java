@@ -41,4 +41,10 @@ public class AnalysisController {
     public InsightResponse getInsight(@RequestParam String month) {
         return service.generateInsight(month);
     }
+
+    @GetMapping("/breakdown")
+    public List<CategorySpendResponse> getBreakdown(@RequestParam String month) {
+        return service.getCategoryBreakdown(month);
+    }
 }
+

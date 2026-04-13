@@ -12,10 +12,6 @@ public class RegisterRequest {
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
-    @NotBlank(message = "UPI Password is required")
-    @Size(min = 4, max = 6, message = "UPI Password must be 4 to 6 digits")
-    private String upiPassword;
-
     public String getUsername() {
         return username;
     }
@@ -32,11 +28,4 @@ public class RegisterRequest {
         this.password = password;
     }
 
-    public String getUpiPassword() {
-        return upiPassword;
-    }
-
-    public void setUpiPassword(String upiPassword) {
-        this.upiPassword = upiPassword;
-    }
 }

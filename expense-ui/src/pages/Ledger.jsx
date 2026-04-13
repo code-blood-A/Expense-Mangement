@@ -76,7 +76,7 @@ export default function Ledger() {
           <select id="filter-category" value={filters.category} onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}
             className="w-full bg-surface-container dark:bg-[#1a1d26] rounded-lg p-2.5 text-sm border border-outline-variant/20 focus:ring-1 focus:ring-primary/40 outline-none text-on-surface dark:text-[#e1e2e5]">
             <option value="">All Categories</option>
-            {['Food','Travel','Shopping','Entertainment','Healthcare','Utilities','Education','Other'].map(c => <option key={c} value={c}>{c}</option>)}
+            {['Food','Travel','Shopping','Entertainment','Healthcare','Utilities','Education','Money Transfer', 'Bill Payments', 'Metro Recharge', 'MISCELLANEOUS'].map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </section>
 

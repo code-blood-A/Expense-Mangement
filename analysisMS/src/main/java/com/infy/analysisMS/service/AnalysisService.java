@@ -62,14 +62,17 @@ public class AnalysisService {
         return new ComparisonResponse(monthYear, prevStr, currSpend, prevSpend, String.format("%.1f %%", Math.abs(pct)), dir);
     }
 
-    public InsightResponse generateInsight(String monthYear) {
+    public List<CategorySpendResponse> getCategoryBreakdown(String monthYear) {
         LocalDate date = parseMonthYear(monthYear);
         List<Object[]> categorySums = repository.findSpendByCategory(date.getYear(), date.getMonthValue());
         
-        List<CategorySpendResponse> breakdown = categorySums.stream()
+        return categorySums.stream()
                 .map(res -> new CategorySpendResponse((String) res[0], (Double) res[1]))
                 .toList();
+    }
 
+    public InsightResponse generateInsight(String monthYear) {
+        List<CategorySpendResponse> breakdown = getCategoryBreakdown(monthYear);
         Double total = breakdown.stream().mapToDouble(CategorySpendResponse::amount).sum();
         ComparisonResponse comp = compareMonths(monthYear);
 
@@ -87,7 +90,7 @@ public class AnalysisService {
             insight = "Vault AI is currently processing your transactions. Please check back shortly.";
         }
 
-        return new InsightResponse(monthYear, insight, breakdown);
+        return new InsightResponse(monthYear, insight);
     }
 
     private LocalDate parseMonthYear(String my) {

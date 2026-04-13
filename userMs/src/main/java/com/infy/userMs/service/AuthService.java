@@ -39,9 +39,7 @@ public class AuthService {
         // Create new user's account
         User user = new User(
                 registerRequest.getUsername(),
-                passwordEncoder.encode(registerRequest.getPassword()),
-                passwordEncoder.encode(registerRequest.getUpiPassword())
-        );
+                passwordEncoder.encode(registerRequest.getPassword()));
 
         userRepository.save(user);
 
@@ -56,15 +54,5 @@ public class AuthService {
         String jwt = jwtUtil.generateToken(loginRequest.getUsername());
 
         return new AuthResponse(jwt, loginRequest.getUsername(), "Login successful");
-    }
-
-    public boolean validateUpi(String username, String rawUpiPassword) {
-        Optional<User> userOptional = userRepository.findByUsername(username);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            // Compare the raw UPI password with the hashed one in the DB
-            return passwordEncoder.matches(rawUpiPassword, user.getUpiPassword());
-        }
-        return false;
     }
 }

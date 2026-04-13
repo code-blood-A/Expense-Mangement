@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axiosClient';
 
-const CATEGORIES = ['Food', 'Travel', 'Shopping', 'Entertainment', 'Healthcare', 'Utilities', 'Education', 'Other'];
-const CAT_ICON   = { Food:'restaurant', Travel:'flight', Shopping:'shopping_cart', Entertainment:'movie', Healthcare:'local_hospital', Utilities:'bolt', Education:'school', Other:'category' };
+const CATEGORIES = [
+  'Food', 'Travel', 'Shopping', 'Entertainment', 'Healthcare', 'Utilities',
+  'Education', 'Money Transfer', 'Bill Payments', 'Metro Recharge', 'MISCELLANEOUS'
+];
+const CAT_ICON = {
+  Food: 'restaurant', Travel: 'flight', Shopping: 'shopping_cart',
+  Entertainment: 'movie', Healthcare: 'local_hospital', Utilities: 'bolt',
+  Education: 'school', 'Money Transfer': 'payments', 'Bill Payments': 'receipt',
+  'Metro Recharge': 'subway', MISCELLANEOUS: 'category'
+};
+
 const fmt = (v) => `₹${Number(v ?? 0).toLocaleString('en-IN')}`;
-const currentMonth = () => { const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; };
+const currentMonth = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`; };
 
 export default function Budget() {
-  const [budgets, setBudgets]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [error, setError]       = useState('');
-  const [success, setSuccess]   = useState('');
+  const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [monthYear, setMonthYear] = useState(currentMonth());
-  const [form, setForm]         = useState({ category: 'Food', limitAmount: '', monthYear: currentMonth() });
+  const [form, setForm] = useState({ category: 'Food', limitAmount: '', monthYear: currentMonth() });
   const [totalBurn, setTotalBurn] = useState(0);
 
   const fetchBudgets = async (my = monthYear) => {
@@ -21,9 +30,9 @@ export default function Budget() {
     try {
       const { data } = await api.get('/api/budgets', { params: { monthYear: my } });
       setBudgets(data);
-      setTotalBurn(data.reduce((s,b) => s + (b.currentSpend ?? 0), 0));
+      setTotalBurn(data.reduce((s, b) => s + (b.currentSpend ?? 0), 0));
     } catch { setError('Could not load budgets. Is BudgetMS running on port 8083?'); }
-    finally  { setLoading(false); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchBudgets(monthYear); }, [monthYear]);
@@ -66,7 +75,7 @@ export default function Budget() {
             <p className="text-xs text-on-surface-variant dark:text-[#a0a3b1]">Define category budget thresholds</p>
           </div>
 
-          {error   && <div className="p-3 bg-error-container rounded-lg text-on-error-container text-xs flex gap-2 items-center"><span className="material-symbols-outlined text-sm">error</span>{error}</div>}
+          {error && <div className="p-3 bg-error-container rounded-lg text-on-error-container text-xs flex gap-2 items-center"><span className="material-symbols-outlined text-sm">error</span>{error}</div>}
           {success && <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-green-700 dark:text-green-400 text-xs flex gap-2 items-center"><span className="material-symbols-outlined text-sm">check_circle</span>{success}</div>}
 
           <form id="budget-form" className="flex flex-col gap-4" onSubmit={handleSave}>
@@ -121,7 +130,7 @@ export default function Budget() {
             <>
               {/* 3-up quick view cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {budgets.slice(0,3).map(b => {
+                {budgets.slice(0, 3).map(b => {
                   const p = pct(b);
                   return (
                     <div key={b.id} className="bg-surface-container-lowest dark:bg-[#1e2230] p-5 rounded-xl border border-outline-variant/10 dark:border-[#2a2d38] flex items-center justify-between group cursor-pointer hover:border-primary/20 transition-all">
@@ -165,11 +174,11 @@ export default function Budget() {
                         </div>
                         <div className="flex-1 px-6">
                           <div className="w-full h-1.5 bg-surface-container-highest dark:bg-[#1e2230] rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full transition-all ${barColor(p)}`} style={{width:`${p}%`}}></div>
+                            <div className={`h-full rounded-full transition-all ${barColor(p)}`} style={{ width: `${p}%` }}></div>
                           </div>
                         </div>
                         <div className="w-1/4 text-right">
-                          <p className="text-sm font-black">{fmt(b.currentSpend??0)} <span className="text-outline-variant font-medium">/ {fmt(b.limitAmount)}</span></p>
+                          <p className="text-sm font-black">{fmt(b.currentSpend ?? 0)} <span className="text-outline-variant font-medium">/ {fmt(b.limitAmount)}</span></p>
                           <p className={`text-[10px] font-bold ${over ? 'text-error' : 'text-primary'}`}>{over ? 'AlertZone' : 'Stable'}</p>
                         </div>
                       </div>

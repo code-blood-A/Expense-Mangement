@@ -37,7 +37,7 @@ public class TransactionService {
 
         // If category is not provided manually, trigger AI to fill it
         if (category == null || category.trim().isEmpty()) {
-            category = aiServiceClient.categorizeTransaction(request.getDescription(), request.getAmount());
+            category = aiServiceClient.categorizeTransaction(request.getDescription(), request.getAmount(), request.getMerchantName());
         }
 
         Transaction transaction = new Transaction(

@@ -3,19 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axiosClient';
 
-const CATEGORIES = ['Food', 'Travel', 'Shopping', 'Entertainment', 'Healthcare', 'Utilities', 'Education', 'Other'];
+const CATEGORIES = [
+  'Food', 'Travel', 'Shopping', 'Entertainment', 'Healthcare', 'Utilities',
+  'Education', 'Money Transfer', 'Bill Payments', 'Metro Recharge', 'MISCELLANEOUS'
+];
 
 const CAT_ICON = {
   Food: 'restaurant', Travel: 'flight', Shopping: 'shopping_cart',
   Entertainment: 'movie', Healthcare: 'local_hospital', Utilities: 'bolt',
-  Education: 'school', Other: 'category',
+  Education: 'school', 'Money Transfer': 'payments', 'Bill Payments': 'receipt',
+  'Metro Recharge': 'subway', MISCELLANEOUS: 'category',
 };
+
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({ merchantName: '', description: '', amount: '', category: 'Food' });
+  const [form, setForm] = useState({ merchantName: '', description: '', amount: '', category: '' });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -24,15 +29,25 @@ export default function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.merchantName || !form.amount) {
+      setError('Merchant name and amount are required.');
+      return;
+    }
     setLoading(true); setError(''); setResult(null);
     try {
-      const { data } = await api.post('/api/transactions/payment', { ...form, amount: parseFloat(form.amount) });
+      const payload = { 
+        ...form, 
+        amount: parseFloat(form.amount),
+        // Normalize categories for backend if needed, but here we just pass as is
+      };
+      const { data } = await api.post('/api/transactions/payment', payload);
       setResult(data);
-      setForm({ merchantName: '', description: '', amount: '', category: 'Food' });
+      setForm({ merchantName: '', description: '', amount: '', category: '' });
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data || 'Transaction failed.');
     } finally { setLoading(false); }
   };
+
 
   const statusColor = (s = '') => {
     const m = s.toUpperCase();
@@ -128,8 +143,10 @@ export default function Dashboard() {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Category</label>
                 <select id="category" name="category" value={form.category} onChange={handleChange}
                   className="w-full bg-surface-container-low dark:bg-[#25282f] p-3 rounded-lg text-sm focus:ring-1 focus:ring-primary/40 outline-none text-on-surface dark:text-[#e1e2e5] border border-transparent hover:border-primary/20 transition-colors cursor-pointer">
+                  <option value="">Auto-Categorize (AI)</option>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Amount (₹)</label>
